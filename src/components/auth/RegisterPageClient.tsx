@@ -4,15 +4,22 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { authAPI, getCurrentUser } from '@/lib/api'
+import { authAPI } from '@/lib/api'
 
-export function LoginForm() {
+export function RegisterForm() {
   const router = useRouter()
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   })
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const [errors, setErrors] = useState<{ 
+    name?: string
+    email?: string
+    password?: string
+    confirmPassword?: string 
+  }>({})
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -27,7 +34,16 @@ export function LoginForm() {
   }
 
   const validate = () => {
-    const newErrors: { email?: string; password?: string } = {}
+    const newErrors: { 
+      name?: string
+      email?: string
+      password?: string
+      confirmPassword?: string 
+    } = {}
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required'
+    }
 
     if (!formData.email) {
       newErrors.email = 'Email is required'
@@ -39,6 +55,12 @@ export function LoginForm() {
       newErrors.password = 'Password is required'
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters'
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password'
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match'
     }
 
     setErrors(newErrors)
@@ -54,33 +76,20 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      const response = await authAPI.login(formData.email, formData.password)
+      const response = await authAPI.register(
+        formData.email,
+        formData.password,
+        formData.name
+      )
 
       if (response.success) {
-        console.log('Login successful, token saved')
-        console.log('User role:', response.user?.role)
-        
-        // Small delay to ensure token is saved
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        // Get user role from response (more reliable than getCurrentUser immediately)
-        const userRole = response.user?.role
-        
-        if (userRole === 'ADMIN') {
-          console.log('Redirecting to /admin')
-          router.push('/admin')
-          router.refresh() // Force refresh to update auth state
-        } else {
-          console.log('Redirecting to /products')
-          router.push('/products')
-          router.refresh()
-        }
+        // Redirect to admin dashboard after registration
+        router.push('/admin')
       } else {
-        setErrorMessage(response.message || 'Login failed')
+        setErrorMessage(response.message || 'Registration failed')
       }
     } catch (error: any) {
-      console.error('Login error:', error)
-      setErrorMessage(error.message || 'Invalid credentials. Please try again.')
+      setErrorMessage(error.message || 'An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -88,6 +97,20 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 w-full">
+      <div>
+        <Input
+          label="Full Name"
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          error={errors.name}
+          placeholder="John Doe"
+          autoComplete="name"
+          disabled={isLoading}
+        />
+      </div>
+
       <div>
         <Input
           label="Email"
@@ -111,7 +134,21 @@ export function LoginForm() {
           onChange={handleChange}
           error={errors.password}
           placeholder="••••••••"
-          autoComplete="current-password"
+          autoComplete="new-password"
+          disabled={isLoading}
+        />
+      </div>
+
+      <div>
+        <Input
+          label="Confirm Password"
+          type="password"
+          name="confirmPassword"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          error={errors.confirmPassword}
+          placeholder="••••••••"
+          autoComplete="new-password"
           disabled={isLoading}
         />
       </div>
@@ -129,16 +166,8 @@ export function LoginForm() {
         isLoading={isLoading}
         className="w-full"
       >
-        Sign In
+        Create Account
       </Button>
-
-      {/* Demo credentials hint */}
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-xs text-blue-800 font-semibold mb-1">Demo Admin Credentials:</p>
-        <p className="text-xs text-blue-700 font-mono">
-          admin@example.com / admin123
-        </p>
-      </div>
     </form>
   )
 }

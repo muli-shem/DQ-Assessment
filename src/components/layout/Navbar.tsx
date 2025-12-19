@@ -47,16 +47,19 @@ export function Navbar() {
             </Link>
 
             {/* Show different options based on auth state */}
-            {authenticated && admin ? (
+            {authenticated ? (
               <>
-                <Link
-                  href="/admin"
-                  className={`text-gray-700 hover:text-blue-600 transition-colors ${
-                    pathname?.startsWith('/admin') ? 'text-blue-600 font-semibold' : ''
-                  }`}
-                >
-                  Dashboard
-                </Link>
+                {/* Only show Dashboard link for admins */}
+                {admin && (
+                  <Link
+                    href="/admin"
+                    className={`text-gray-700 hover:text-blue-600 transition-colors ${
+                      pathname?.startsWith('/admin') ? 'text-blue-600 font-semibold' : ''
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -66,11 +69,18 @@ export function Navbar() {
                 </Button>
               </>
             ) : (
-              <Link href="/login">
-                <Button variant="primary" size="sm">
-                  Login
-                </Button>
-              </Link>
+              <>
+                <Link href="/register">
+                  <Button variant="outline" size="sm">
+                    Register
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button variant="primary" size="sm">
+                    Login
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>

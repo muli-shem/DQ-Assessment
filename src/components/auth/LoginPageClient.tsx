@@ -34,6 +34,16 @@ export function LoginPageClient() {
         {/* Login Card */}
         <div className="bg-white rounded-lg shadow-lg p-8">
           <LoginForm />
+
+          {/* Registration Link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+                Create one
+              </Link>
+            </p>
+          </div>
         </div>
 
         {/* Back to Home Link */}

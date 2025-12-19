@@ -6,23 +6,33 @@ export function getAuthToken(): string | null {
   return localStorage.getItem('auth-token')
 }
 
-// Set auth token to localStorage
+// Set auth token to localStorage AND cookie
 export function setAuthToken(token: string): void {
   if (typeof window === 'undefined') return
+  
+  // Store in localStorage
   localStorage.setItem('auth-token', token)
+  
+  // Store in cookie for middleware access
+  document.cookie = `auth-token=${token}; path=/; max-age=${7 * 24 * 60 * 60}` // 7 days
 }
 
 // Remove auth token
 export function removeAuthToken(): void {
   if (typeof window === 'undefined') return
+  
+  // Remove from localStorage
   localStorage.removeItem('auth-token')
+  
+  // Remove from cookie
+  document.cookie = 'auth-token=; path=/; max-age=0'
 }
 
 // Get current user from token
 export function getCurrentUser() {
   const token = getAuthToken()
   if (!token) return null
-  
+
   try {
     const payload = JSON.parse(atob(token.split('.')[1]))
     return {
@@ -55,24 +65,24 @@ async function apiRequest(
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers as Record<string, string>,
+    ...options.headers as Record<string, string>
   }
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
-  
-  const response = await fetch(`${API_URL}${endpoint}`, {  // ✅ Fixed: Regular template literal
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers
   })
-  
+
   const data = await response.json()
-  
+
   if (!response.ok) {
     throw new Error(data.message || 'Something went wrong')
   }
-  
+
   return data
 }
 
@@ -90,7 +100,7 @@ export const authAPI = {
     
     return data
   },
-  
+
   register: async (email: string, password: string, name?: string) => {
     const data = await apiRequest('/api/auth/register', {
       method: 'POST',
@@ -103,7 +113,7 @@ export const authAPI = {
     
     return data
   },
-  
+
   logout: () => {
     removeAuthToken()
   }
@@ -117,13 +127,13 @@ export const productsAPI = {
     if (params?.search) queryParams.append('search', params.search)
     
     const query = queryParams.toString()
-    return apiRequest(`/api/products${query ? `?${query}` : ''}`)  // ✅ Fixed
+    return apiRequest(`/api/products${query ? `?${query}` : ''}`)
   },
-  
+
   getById: async (id: string) => {
-    return apiRequest(`/api/products/${id}`)  // ✅ Fixed
+    return apiRequest(`/api/products/${id}`)
   },
-  
+
   create: async (product: {
     name: string
     description?: string
@@ -137,7 +147,7 @@ export const productsAPI = {
       body: JSON.stringify(product)
     })
   },
-  
+
   update: async (id: string, product: Partial<{
     name: string
     description: string
@@ -147,14 +157,14 @@ export const productsAPI = {
     stock: number
     isActive: boolean
   }>) => {
-    return apiRequest(`/api/products/${id}`, {  
+    return apiRequest(`/api/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(product)
     })
   },
-  
+
   delete: async (id: string) => {
-    return apiRequest(`/api/products/${id}`, {  
+    return apiRequest(`/api/products/${id}`, {
       method: 'DELETE'
     })
   }

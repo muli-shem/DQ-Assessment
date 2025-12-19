@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { isAuthenticated, isAdmin } from '@/lib/api'
+import { isAuthenticated, isAdmin, getCurrentUser } from '@/lib/api'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -18,9 +18,17 @@ export default function AdminLayout({
 
   useEffect(() => {
     // Check if user is authenticated and is admin
-    if (!isAuthenticated() || !isAdmin()) {
+    const authenticated = isAuthenticated()
+    const admin = isAdmin()
+    const user = getCurrentUser()
+    
+    console.log('Admin Layout Check:', { authenticated, admin, user })
+    
+    if (!authenticated || !admin) {
+      console.log('Not authorized, redirecting to login')
       router.push('/login')
     } else {
+      console.log('Authorized, showing admin panel')
       setIsAuthorized(true)
     }
     setIsLoading(false)
@@ -29,7 +37,10 @@ export default function AdminLayout({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     )
   }

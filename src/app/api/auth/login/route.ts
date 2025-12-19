@@ -15,17 +15,20 @@ export async function POST(request: NextRequest) {
                 { status: 400 },
             );
         }
-        //Find user by email
+
+        // Find user by email
         const user = await prisma.user.findUnique({
             where: { email },
         })
+
         if (!user) {
             return NextResponse.json(
                 { success: false, message: 'Invalid credentials' },
                 { status: 401 },
             );
         }
-        //Verify password
+
+        // Verify password
         const isValidPassword = await comparePassword(password, user.password);
         if (!isValidPassword) {
             return NextResponse.json(
@@ -33,34 +36,45 @@ export async function POST(request: NextRequest) {
                 { status: 401 },
             );
         }
-        //Generate token
-        const token = generateToken({
+
+        // 1. Await the token generation (since jose is async)
+        const token = await generateToken({
             userId: user.id,
             email: user.email,
             role: user.role,
         })
-        const response: AuthResponse = {
+
+        const responseData: AuthResponse = {
             success: true,
             message: 'Login successful',
-            token,
+            token, // Still returning it in body for frontend convenience
             user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+            }
         }
-    }
-        return NextResponse.json(response, { status: 200 });
+
+        // 2. Create the response object
+        const response = NextResponse.json(responseData, { status: 200 });
+
+        // 3. SET THE COOKIE so Middleware can see it
+        response.cookies.set('auth-token', token, {
+            httpOnly: true, // Prevents client-side JS from reading the token (XSS protection)
+            secure: process.env.NODE_ENV === 'production', // Only sends over HTTPS in production
+            sameSite: 'lax', 
+            maxAge: 60 * 60 * 24, // 24 hours
+            path: '/', // Available across the whole site
+        });
+
+        return response;
 
     } catch (error: any) {
-        console.error('Login Error :', error);
+        console.error('Login Error:', error);
         return NextResponse.json(
-            {
-                success: false,
-                message: 'Internal Server Error',
-            },
-            { status: 500, }
+            { success: false, message: 'Internal Server Error' },
+            { status: 500 }
         );
     }
-
 }

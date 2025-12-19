@@ -2,41 +2,58 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
-export function middleware(request: NextRequest) {
+// 1. Added 'async' to the middleware function
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  
+
+  // Allow public routes
+  if (pathname === '/' || 
+      pathname === '/login' || 
+      pathname === '/register' || 
+      pathname.startsWith('/products') ||
+      pathname.startsWith('/_next') ||
+      (pathname.startsWith('/api/products') && request.method === 'GET')) {
+    return NextResponse.next()
+  }
+
   // Protect /admin routes
   if (pathname.startsWith('/admin')) {
-    // Check for token in Authorization header only
-    const tokenFromHeader = request.headers.get('authorization')?.replace('Bearer ', '')
-    
-    if (!tokenFromHeader) {
-      // Redirect to login if no token
+    const token = request.cookies.get('auth-token')?.value
+
+    console.log('Middleware - Admin route check:', { pathname, hasToken: !!token })
+
+    if (!token) {
+      console.log('No token, redirecting to login')
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    
-    const payload = verifyToken(tokenFromHeader)
-    
+
+    // 2. Added 'await' here
+    const payload = await verifyToken(token)
+    console.log('Token payload:', payload)
+
     if (!payload || payload.role !== 'ADMIN') {
-      // Redirect to home if not admin
+      console.log('Invalid token or not admin, redirecting to home')
       return NextResponse.redirect(new URL('/', request.url))
     }
+
+    console.log('Admin verified, allowing access')
   }
-  
+
   // Protect POST, PUT, DELETE requests to /api/products
   if (pathname.startsWith('/api/products') && request.method !== 'GET') {
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '')
-    
+
     if (!token) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
         { status: 401 }
       )
     }
-    
-    const payload = verifyToken(token)
-    
+
+    // 3. Added 'await' here
+    const payload = await verifyToken(token)
+
     if (!payload || payload.role !== 'ADMIN') {
       return NextResponse.json(
         { success: false, message: 'Admin access required' },
@@ -44,14 +61,12 @@ export function middleware(request: NextRequest) {
       )
     }
   }
-  
+
   return NextResponse.next()
 }
 
-// Configure which routes use this middleware
 export const config = {
   matcher: [
-    '/admin/:path*',
-    '/api/products/:path*'
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ]
 }

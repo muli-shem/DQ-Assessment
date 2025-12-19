@@ -1,43 +1,45 @@
-import { NextRequest,NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { RegisterRequest, AuthResponse } from "@/lib/types";
 
-export async function POST(request: NextRequest){
-    try{
+export async function POST(request: NextRequest) {
+    try {
         const body: RegisterRequest = await request.json();
         const { email, password, name } = body;
 
-        //validate input
-        if (!email || !password){
+        // Validate input
+        if (!email || !password) {
             return NextResponse.json(
                 { success: false, message: 'Email and password are required.' },
                 { status: 400 },
-            )
-
+            );
         }
-        //check if user already exists
+
+        // Check if user already exists
         const existingUser = await prisma.user.findUnique({
             where: { email },
-        })
-        if (existingUser){
+        });
+
+        if (existingUser) {
             return NextResponse.json(
                 { success: false, message: 'User with this email already exists.' },
                 { status: 409 },
-            )
+            );
         }
-        //hash password
+
+        // Hash password
         const hashedPassword = await hashPassword(password);
 
-        //create user
+        // Create user
         const user = await prisma.user.create({
             data: {
                 email,
                 password: hashedPassword,
                 name: name || null,
-                role: 'USER', //default role
+                role: 'USER', // default role
             },
-            select :{
+            select: {
                 id: true,
                 email: true,
                 name: true,
@@ -45,27 +47,40 @@ export async function POST(request: NextRequest){
             }
         });
 
-        //generate token
-        const token = generateToken({
+        // 1. Await the token generation (Critical: generateToken is now async)
+        const token = await generateToken({
             userId: user.id,
             email: user.email,
             role: user.role,
-        })
-        const response: AuthResponse = {
+        });
+
+        const responseData: AuthResponse = {
             success: true,
             message: 'User registered successfully.',
             token,
             user,
-        }
-        return NextResponse.json(response, { status: 201 });
+        };
 
-    } catch (error:any) {
+        // 2. Create the response object
+        const response = NextResponse.json(responseData, { status: 201 });
+
+        // 3. Set the cookie so the user is logged in immediately
+        // This ensures Middleware recognizes the session right away
+        response.cookies.set('auth-token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24, // 24 hours
+            path: '/',
+        });
+
+        return response;
+
+    } catch (error: any) {
         console.error('Error registering user:', error);
         return NextResponse.json({
             success: false,
-            message: 'Internal Server Error',},
-    { status: 500,}
-            
-        )
+            message: 'Internal Server Error',
+        }, { status: 500 });
     }
 }
