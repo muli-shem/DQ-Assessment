@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dq-assessment-4fw7-git-main-mutua-muli-shems-projects.vercel.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 // Get auth token from localStorage
 export function getAuthToken(): string | null {
