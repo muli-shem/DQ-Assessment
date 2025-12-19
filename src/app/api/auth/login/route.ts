@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         const responseData: AuthResponse = {
             success: true,
             message: 'Login successful',
-            token, // Still returning it in body for frontend convenience
+            token, 
             user: {
                 id: user.id,
                 email: user.email,

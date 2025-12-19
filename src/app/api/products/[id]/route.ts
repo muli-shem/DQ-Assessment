@@ -1,77 +1,55 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken, extractToken } from '@/lib/auth'
+import { ApiResponse } from '@/lib/api-response'
 
 // GET /api/products/:id - Get single product (PUBLIC)
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }  
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;  
+    const { id } = await params;
     const product = await prisma.product.findUnique({
       where: { id }
     })
 
     if (!product) {
-      return NextResponse.json(
-        { success: false, message: 'Product not found' },
-        { status: 404 }
-      )
+      return ApiResponse.error('Product not found', 404);
     }
 
-    return NextResponse.json({
-      success: true,
-      data: product
-    })
+    return ApiResponse.success(product);
 
   } catch (error: any) {
-    console.error('Get product error:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch product' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError(error);
   }
 }
 
 // PUT /api/products/:id - Update product (ADMIN ONLY)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;  
-    
+    const { id } = await params;
+
     // Verify admin authentication
     const authHeader = request.headers.get('authorization')
     const token = extractToken(authHeader)
 
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+    if (!token) return ApiResponse.unauthorized();
 
-    const payload = verifyToken(token)
+    // CRITICAL: Await the async verifyToken
+    const payload = await verifyToken(token)
 
     if (!payload || payload.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, message: 'Admin access required' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Admin access required');
     }
 
     // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id }  
-    })
-
+    const existingProduct = await prisma.product.findUnique({ where: { id } })
     if (!existingProduct) {
-      return NextResponse.json(
-        { success: false, message: 'Product not found' },
-        { status: 404 }
-      )
+      return ApiResponse.error('Product not found', 404);
     }
 
     // Parse request body
@@ -79,16 +57,13 @@ export async function PUT(
     const { name, description, price, category, imageUrl, stock, isActive } = body
 
     // Validate price if provided
-    if (price !== undefined && price <= 0) {
-      return NextResponse.json(
-        { success: false, message: 'Price must be greater than 0' },
-        { status: 400 }
-      )
+    if (price !== undefined && parseFloat(price) <= 0) {
+      return ApiResponse.error('Price must be greater than 0');
     }
 
     // Update product
     const product = await prisma.product.update({
-      where: { id },  
+      where: { id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
@@ -100,83 +75,49 @@ export async function PUT(
       }
     })
 
-    return NextResponse.json({
-      success: true,
-      message: 'Product updated successfully',
-      data: product
-    })
+    return ApiResponse.success(product, 'Product updated successfully');
 
   } catch (error: any) {
-    console.error('Update product error:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to update product' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError(error);
   }
 }
 
 // DELETE /api/products/:id - Delete product (ADMIN ONLY)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }  
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;  
-    
+    const { id } = await params;
+
     // Verify admin authentication
     const authHeader = request.headers.get('authorization')
     const token = extractToken(authHeader)
 
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+    if (!token) return ApiResponse.unauthorized();
 
-    const payload = verifyToken(token)
+    // CRITICAL: Await the async verifyToken
+    const payload = await verifyToken(token)
 
     if (!payload || payload.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, message: 'Admin access required' },
-        { status: 403 }
-      )
+      return ApiResponse.forbidden('Admin access required');
     }
 
     // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id }  
-    })
-
+    const existingProduct = await prisma.product.findUnique({ where: { id } })
     if (!existingProduct) {
-      return NextResponse.json(
-        { success: false, message: 'Product not found' },
-        { status: 404 }
-      )
+      return ApiResponse.error('Product not found', 404);
     }
 
     // Soft delete by setting isActive to false
     const product = await prisma.product.update({
-      where: { id },  
+      where: { id },
       data: { isActive: false }
     })
 
-    // OR Hard delete (permanently remove from database)
-    // await prisma.product.delete({
-    //   where: { id }
-    // })
-
-    return NextResponse.json({
-      success: true,
-      message: 'Product deleted successfully',
-      data: product
-    })
+    return ApiResponse.success(product, 'Product deleted successfully');
 
   } catch (error: any) {
-    console.error('Delete product error:', error)
-    return NextResponse.json(
-      { success: false, message: 'Failed to delete product' },
-      { status: 500 }
-    )
+    return ApiResponse.serverError(error);
   }
 }
