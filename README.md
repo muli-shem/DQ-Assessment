@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Product Catalog Platform
+A fullstack e-commerce product management system with role-based admin access and public browsing. Built with Next.js 15, TypeScript, and PostgreSQL.
+ Live Demo
+URL: https://dq-assessment.vercel.app/
+Admin Access:
+ Features
+Admin Dashboard
 
-## Getting Started
+Secure JWT authentication
+Full CRUD operations for products
+Real-time inventory management
+Category and stock control
 
-First, run the development server:
+Public Interface
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Browse product catalog
+Search and filter products
+Responsive product detail pages
+Mobile-optimized design
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Frontend: Next.js 15 (App Router), React, TypeScript, Tailwind CSS
+Backend: Next.js API Routes (REST)
+Database: PostgreSQL (Neon), Prisma ORM
+Auth: JWT, bcryptjs
+Deployment: Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Project Structure
+src/
+├── app/
+│   ├── admin/              # Admin dashboard & product management
+│   ├── api/                # REST API endpoints
+│   ├── login/              # Authentication
+│   └── products/           # Public catalog
+├── components/
+│   ├── auth/               # Login/Register forms
+│   ├── products/           # Product cards, filters, forms
+│   └── ui/                 # Reusable components
+└── lib/
+    ├── api.ts              # API client
+    ├── auth.ts             # JWT utilities
+    └── prisma.ts           # Database client
+🔌 API Endpoints
+Authentication
 
-## Learn More
+POST /api/auth/login - Admin login
+POST /api/auth/register - Create account
 
-To learn more about Next.js, take a look at the following resources:
+Products
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+GET /api/products - List products (public)
+GET /api/products/:id - Product details (public)
+POST /api/products - Create product (admin)
+PUT /api/products/:id - Update product (admin)
+DELETE /api/products/:id - Delete product (admin)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🚦 Quick Start
+Prerequisites
 
-## Deploy on Vercel
+Node.js 20.19+
+pnpm (or npm)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Installation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Clone & Install
+
+bashgit clone <your-repo-url>
+cd product-catalog
+pnpm install
+
+Environment Setup
+
+bashcp .env.example .env
+Update .env:
+envDATABASE_URL="your-neon-postgres-url"
+JWT_SECRET="your-secret-key"
+NEXT_PUBLIC_API_URL="http://localhost:3000"
+
+Database Setup
+
+bashpnpm prisma migrate dev
+pnpm prisma db seed
+
+Run Development Server
+
+bashpnpm dev
+Visit http://localhost:3000
+ Database Schema
+User
+
+id, email, password (hashed), name, role (USER/ADMIN)
+
+Product
+
+id, name, description, price, category, imageUrl, stock, isActive
+
+Security
+
+JWT token authentication
+Password hashing (bcrypt)
+Route protection via proxy middleware
+Role-based access control
+Input validation
+
+Notes
+
+Proxy Middleware: Uses proxy.ts instead of standard middleware for enhanced routing control
+Database: Hosted on Neon (serverless PostgreSQL)
+Images: Currently supports external URLs only
+
+Deployment
+Deployed on Vercel with automatic CI/CD from main branch.
+Environment Variables:
+
+DATABASE_URL - Neon PostgreSQL connection string
+JWT_SECRET - Production secret key
+NEXT_PUBLIC_API_URL - Production domain
+
+Contributing
+
+Fork the repository
+Create feature branch (git checkout -b feature/AmazingFeature)
+Commit changes (git commit -m 'Add AmazingFeature')
+Push to branch (git push origin feature/AmazingFeature)
+Open Pull Request
+
+
+Built with Next.js, TypeScript, and Prisma

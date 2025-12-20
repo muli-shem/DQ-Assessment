@@ -131,14 +131,6 @@ export function LoginForm() {
       >
         Sign In
       </Button>
-
-      {/* Demo credentials hint */}
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-xs text-blue-800 font-semibold mb-1">Demo Admin Credentials:</p>
-        <p className="text-xs text-blue-700 font-mono">
-          admin@example.com / admin123
-        </p>
-      </div>
     </form>
   )
 }
