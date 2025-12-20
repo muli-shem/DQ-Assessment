@@ -13,7 +13,7 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create Admin Account
+            Create Account
           </h1>
           <p className="text-gray-600">Register to manage your product catalog</p>
         </div>

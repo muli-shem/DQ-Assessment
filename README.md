@@ -26,26 +26,6 @@ Database: PostgreSQL (Neon), Prisma ORM
 Auth: JWT, bcryptjs
 Deployment: Vercel
 
-Project Structure
-src/
-├── app/
-│   ├── admin/              # Admin dashboard & product management
-│   ├── api/                # REST API endpoints
-│   ├── login/              # Authentication
-│   └── products/           # Public catalog
-├── components/
-│   ├── auth/               # Login/Register forms
-│   ├── products/           # Product cards, filters, forms
-│   └── ui/                 # Reusable components
-└── lib/
-    ├── api.ts              # API client
-    ├── auth.ts             # JWT utilities
-    └── prisma.ts           # Database client
-🔌 API Endpoints
-Authentication
-
-POST /api/auth/login - Admin login
-POST /api/auth/register - Create account
 
 Products
 
