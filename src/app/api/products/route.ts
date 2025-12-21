@@ -1,9 +1,53 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken, extractToken } from '@/lib/auth';
-import { ApiResponse } from '@/lib/api-response'; // Ensure you created
+import { ApiResponse } from '@/lib/api-response';
 
-// GET: Fetch all products with optional filters
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: Get all products
+ *     description: Retrieve list of all active products with optional filtering (public endpoint)
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter products by category
+ *         example: Electronics
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search products by name or description
+ *         example: laptop
+ *     responses:
+ *       200:
+ *         description: Products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Fetched 10 products
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -40,7 +84,81 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST: Create a new product (Admin Only)
+/**
+ * @swagger
+ /api/products:
+ *   post:
+ *     summary: Create a new product
+ *     description: Create a new product in the catalog (admin only)
+ *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - price
+ *               - category
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: MacBook Pro 16"
+ *               description:
+ *                 type: string
+ *                 example: High-performance laptop for professionals
+ *               price:
+ *                 type: number
+ *                 format: float
+ *                 example: 2499.99
+ *               category:
+ *                 type: string
+ *                 example: Electronics
+ *               imageUrl:
+ *                 type: string
+ *                 format: uri
+ *                 example: https://example.com/image.jpg
+ *               stock:
+ *                 type: integer
+ *                 example: 10
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Product created successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Authentication token missing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 export async function POST(request: NextRequest) {
     try {
         // 1. Extract and Verify Token
